@@ -16,7 +16,7 @@ def setup_2FA():
 def login_2FA() -> None:
     while True:
         input_decrypt_key: str = input("Enter key: ")
-        with open("company_data.pkl", "rb") as inp:
+        with open("totp_object.pkl", "rb") as inp:
             totp_object = dill.load(inp)
         verified_or_not = totp_object.verify(input_decrypt_key)
         if verified_or_not:
@@ -45,7 +45,7 @@ def entry_menu():
             login_2FA()
         case "2":
             totp_object = setup_2FA()
-            with open("company_data.pkl", "wb") as outp:
+            with open("totp_object.pkl", "wb") as outp:
                 dill.dump(totp_object, outp, dill.HIGHEST_PROTOCOL)
         case "0":
             exit()
