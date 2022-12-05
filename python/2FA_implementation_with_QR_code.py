@@ -19,13 +19,17 @@ def verify_pickle():
     with open("totp_object.pkl", "rb") as inp:
         totp_object = dill.load(inp)
     pickled_data = dill.dumps(totp_object)
-    secret_key = "25345-abc456"
+    secret_key = input("Enter password to unlock your 2FA key: ")
     digest = hmac.new(secret_key.encode(), pickled_data,
                       hashlib.sha256).hexdigest()
     with open("saved.txt", "r") as hex:
         saved = hex.read()
-
-    return totp_object if hmac.compare_digest(saved, digest) else False
+    verify = hmac.compare_digest(saved, digest)
+    if verify:
+        return totp_object
+    else:
+        print("2FA key unlocked failed.")
+        return False
 
 
 def login_2FA() -> None:
@@ -58,15 +62,15 @@ def entry_menu():
         case "1":
             login_2FA()
         case "2":
-            secret_key = "25345-abc456"
             totp_object = setup_2FA()
-            with open("totp_object.pkl", "wb") as outp:
-                dill.dump(totp_object, outp, dill.HIGHEST_PROTOCOL)
+            secret_key = input("Enter password to lock your 2FA key: ")
             pickled_data = dill.dumps(totp_object)
             digest = hmac.new(secret_key.encode(), pickled_data,
                               hashlib.sha256).hexdigest()
-            with open("saved.txt", "w") as f:
-                f.write(digest)
+            with open("saved.txt", "w") as pickle_signature:
+                pickle_signature.write(digest)
+            with open("totp_object.pkl", "wb") as outp:
+                dill.dump(totp_object, outp, dill.HIGHEST_PROTOCOL)
             print("QR code saved for setup 2FA")
         case "0":
             exit()
