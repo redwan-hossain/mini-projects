@@ -1,6 +1,8 @@
 import pyotp
 import qrcode
 import dill
+import hmac
+import hashlib
 
 
 def setup_2FA():
@@ -13,11 +15,23 @@ def setup_2FA():
     return totp_setup
 
 
+def verify_pickle():
+    with open("totp_object.pkl", "rb") as inp:
+        totp_object = dill.load(inp)
+    pickled_data = dill.dumps(totp_object)
+    secret_key = "25345-abc456"
+    digest = hmac.new(secret_key.encode(), pickled_data,
+                      hashlib.sha256).hexdigest()
+    with open("saved.txt", "r") as hex:
+        saved = hex.read()
+
+    return totp_object if hmac.compare_digest(saved, digest) else False
+
+
 def login_2FA() -> None:
-    while True:
+    totp_object = verify_pickle()
+    while totp_object:
         input_decrypt_key: str = input("Enter key: ")
-        with open("totp_object.pkl", "rb") as inp:
-            totp_object = dill.load(inp)
         verified_or_not = totp_object.verify(input_decrypt_key)
         if verified_or_not:
             print("Welcome")
@@ -44,9 +58,16 @@ def entry_menu():
         case "1":
             login_2FA()
         case "2":
+            secret_key = "25345-abc456"
             totp_object = setup_2FA()
             with open("totp_object.pkl", "wb") as outp:
                 dill.dump(totp_object, outp, dill.HIGHEST_PROTOCOL)
+            pickled_data = dill.dumps(totp_object)
+            digest = hmac.new(secret_key.encode(), pickled_data,
+                              hashlib.sha256).hexdigest()
+            with open("saved.txt", "w") as f:
+                f.write(digest)
+            print("QR code saved for setup 2FA")
         case "0":
             exit()
 
